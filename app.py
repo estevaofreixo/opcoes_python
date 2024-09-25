@@ -30,11 +30,6 @@ def run_script2():
     run_script("adesivo7.py")
     return redirect(url_for('index'))
 
-# Rota para executar o terceiro script
-@app.route('/run-script3')
-def run_script3():
-    run_script("script3.py")
-    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
