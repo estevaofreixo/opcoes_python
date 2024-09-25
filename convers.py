@@ -156,12 +156,31 @@ else:
 
     # Manipulação do Excel via COM (pywin32)
     excel = win32.Dispatch("Excel.Application")
-    workbook = excel.Workbooks("CONVERSAO EM TR.xlsm")
+
+    # Tenta acessar o arquivo do Excel já aberto, caso contrário, o abre
+    try:
+        workbook = excel.Workbooks("CONVERSAO EM TR.xlsm")  # Tenta acessar se já estiver aberto
+    except Exception:
+        # Se o arquivo não estiver aberto, abre o arquivo
+        caminho_arquivo_excel = r"D:\AREA DE TRABALHO\TRT\HOMOLOGACAO\CONVERSAO EM TR.xlsm"  # Ajuste o caminho para o correto                                  
+        workbook = excel.Workbooks.Open(caminho_arquivo_excel)
+
     worksheet = workbook.Sheets(1)
 
+    # Função para forçar o cálculo de uma célula
     def forcar_calculo_celula(celula):
         worksheet.Range(celula).Value = worksheet.Range(celula).Value
 
+    # Limpar células antes de preencher com novos valores
+    def limpar_celulas():
+        celulas_para_limpar = ["D9", "C34", "C35", "C13", "C20", "C24", "C21", "C22", "C23", "C28", "C29", "C30", "C19", "C18", "C14", "C15", "C16"]
+        for celula in celulas_para_limpar:
+            worksheet.Range(celula).Value = None
+
+    # Limpar as células antes de preencher com novos valores
+    limpar_celulas()
+
+    # Preencher as células com novos valores
     if valor_data_liquidacao is not None:
         worksheet.Range("C34").Value = valor_data_liquidacao
         forcar_calculo_celula("C34")
