@@ -37,7 +37,6 @@ else:
     else:
         print("Nenhuma combinação alfanumérica encontrada no nome do arquivo.")
 
-    
     # Leitura do PDF baixado
     leitor_pdf = PdfReader(caminho_pdf)
 
@@ -53,6 +52,7 @@ else:
     valor_c_primeira = None
     valor_c_segunda = None
     valor_d_segunda = None
+    valor_contribuicao_social = None  # Nova variável para a contribuição social
 
     # Função para corrigir possíveis inversões de datas
     def corrigir_data_invertida(data_str):
@@ -64,8 +64,8 @@ else:
             except ValueError:
                 return None
 
-    # Função para capturar a terceira data no formato dd/mm/yyyy, caractere por caractere
-    def encontrar_terceira_data_caractere_por_caractere(texto):
+    # Função para capturar a segunda data no formato dd/mm/yyyy, caractere por caractere
+    def encontrar_segunda_data_caractere_por_caractere(texto):
         datas = []
         buffer = ""
         for char in texto:
@@ -76,8 +76,8 @@ else:
                     datas.append(buffer)
                 buffer = ""  # Reiniciar o buffer para a próxima data
 
-        if len(datas) >= 3:
-            return corrigir_data_invertida(datas[2])
+        if len(datas) >= 2:
+            return corrigir_data_invertida(datas[1])  # Retorna a segunda data
         return None
 
     # Função para encontrar o maior número em uma linha (considerando formatação com vírgula e ponto)
@@ -123,37 +123,33 @@ else:
         # Processar honorários antes de "CUSTAS JUDICIAIS DEVIDAS PELO RECLAMADO"
         if texto_antes_custas:
             linhas_antes = texto_antes_custas.split('\n')
-            for i, linha in enumerate(linhas_antes):
+            for linha in linhas_antes:
                 if linha.startswith("HONORÁRIOS LÍQUIDOS PARA"):
                     contador_honorarios += 1
                     valor_honorarios = encontrar_numero_posterior(linha, "HONORÁRIOS LÍQUIDOS PARA")
-                    
-                    # Se não encontrou um valor na linha atual, tenta na próxima linha
-                    if valor_honorarios is None and i + 1 < len(linhas_antes):
-                        valor_honorarios = encontrar_maior_numero(linhas_antes[i + 1])
-
                     if contador_honorarios == 1:
                         valor_honorarios_primeira = valor_honorarios
                     elif contador_honorarios == 2:
                         valor_honorarios_segunda = valor_honorarios
 
+                # Encontrar o valor da "CONTRIBUIÇÃO SOCIAL SOBRE SALÁRIOS DEVIDOS"
+                if "CONTRIBUIÇÃO SOCIAL SOBRE SALÁRIOS DEVIDOS" in linha:
+                    valor_contribuicao_social = encontrar_numero_posterior(linha, "CONTRIBUIÇÃO SOCIAL SOBRE SALÁRIOS DEVIDOS")
+
+                # Encontrar o valor de "LÍQUIDO DEVIDO AO RECLAMANTE" na mesma linha
+                if "LÍQUIDO DEVIDO AO RECLAMANTE" in linha:
+                    valor_liquido_reclamante = encontrar_numero_posterior(linha, "LÍQUIDO DEVIDO AO RECLAMANTE")
+
         if texto_depois_custas:
             linhas_depois = texto_depois_custas.split('\n')
-            for i, linha in enumerate(linhas_depois):
+            for linha in linhas_depois:
                 if linha.startswith("HONORÁRIOS LÍQUIDOS PARA"):
                     valor_honorarios_terceira = encontrar_numero_posterior(linha, "HONORÁRIOS LÍQUIDOS PARA")
-                    
-                    # Se não encontrou um valor na linha atual, tenta na próxima linha
-                    if valor_honorarios_terceira is None and i + 1 < len(linhas_depois):
-                        valor_honorarios_terceira = encontrar_maior_numero(linhas_depois[i + 1])
 
         linhas = texto.split('\n')
 
         if valor_data_liquidacao is None:
-            valor_data_liquidacao = encontrar_terceira_data_caractere_por_caractere(texto)
-
-        if valor_liquido_reclamante is None:
-            valor_liquido_reclamante = encontrar_numero_anterior(texto, "Líquido Devido ao Reclamante")
+            valor_data_liquidacao = encontrar_segunda_data_caractere_por_caractere(texto)  # Alterado para segunda data
 
         if valor_deposito_fgts is None:
             valor_deposito_fgts = encontrar_numero_posterior(texto, "DEPÓSITO FGTS")
@@ -185,11 +181,9 @@ else:
 
     # Tenta acessar o arquivo do Excel já aberto, caso contrário, o abre
     try:
-        workbook = excel.Workbooks("CONVERSAO EM TR 3.xlsm")  # Tenta acessar se já estiver aberto
-    except Exception:
-        # Se o arquivo não estiver aberto, abre o arquivo
-        caminho_arquivo_excel = r"C:\Users\estevao.freixo\Desktop\TRT\HOMOLOGACAO\CONVERSAO EM TR 3.xlsm"  # Ajuste o caminho para o correto                                  
-                                  
+        workbook = excel.Workbooks("CONVERSAO EM TR 3.xlsm")  # Tenta acessar o arquivo já aberto
+    except Exception as e:
+        caminho_arquivo_excel = r"C:\Users\estevao.freixo\Desktop\TRT\HOMOLOGACAO\CONVERSAO EM TR.xlsm"  # Ajuste o caminho para o correto
         workbook = excel.Workbooks.Open(caminho_arquivo_excel)
 
     worksheet = workbook.Sheets(1)
@@ -217,7 +211,7 @@ else:
         forcar_calculo_celula("C35")
 
     if valor_liquido_reclamante is not None:
-        worksheet.Range("C13").Value = valor_liquido_reclamante
+        worksheet.Range("C13").Value = valor_liquido_reclamante  # Valor inserido na célula C13
         forcar_calculo_celula("C13")
 
     if valor_deposito_fgts is not None:
@@ -250,6 +244,10 @@ else:
 
     if valor_c_primeira is not None:
         worksheet.Range("C15").Value = valor_c_primeira
+        forcar_calculo_celula("C15")
+
+    if valor_contribuicao_social is not None:  # Preencher a célula C15 com o valor da contribuição social
+        worksheet.Range("C15").Value = valor_contribuicao_social
         forcar_calculo_celula("C15")
 
     if valor_c_segunda is not None:

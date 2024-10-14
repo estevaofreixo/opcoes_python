@@ -205,7 +205,7 @@ try:
     
     # Extrair o nome base do arquivo PDF
     nome_arquivo_original = arquivo_pdf_mais_recente.stem  # Obtem o nome do arquivo sem a extensão
-    caminho_saida = f'C:/Users/USUÁRIO/Downloads/{nome_arquivo_original}_editado.pdf'  # Adiciona '_editado'
+    caminho_saida = f'C:/Users/estevao.freixo/Downloads/{nome_arquivo_original}_editado.pdf'  # Adiciona '_editado'
                       
 except Exception as e:
     print(f"Erro ao abrir o PDF: {e}")
