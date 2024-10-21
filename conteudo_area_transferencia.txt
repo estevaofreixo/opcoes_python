@@ -1,0 +1,13 @@
+import pyperclip
+
+# Captura o conteúdo da área de transferência
+conteudo = pyperclip.paste()
+
+# Define o nome do arquivo
+nome_arquivo = 'conteudo_area_transferencia.txt'
+
+# Abre o arquivo em modo de escrita e salva o conteúdo
+with open(nome_arquivo, 'w', encoding='utf-8') as arquivo:
+    arquivo.write(conteudo)
+
+print(f"O conteúdo da área de transferência foi salvo em '{nome_arquivo}'.")
